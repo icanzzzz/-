@@ -1,263 +1,252 @@
 #include"AirPlay.h"
-#include"list.h"
+#include"my_list.h"
 #include<conio.h>
+#include<iostream>
+using namespace std;
 
-//飞机控制
-void ctrl(int* ctrlList)
-{
-	ExMessage ctrlmsg;
-	//判断是否按下按键
-	if (peekmessage(&ctrlmsg, EX_KEY))
+
+// 键盘输入
+void keyInput(int* keyStateList){
+	ExMessage controlMsg;
+	// 判断是否按下按键
+	if (peekmessage(&controlMsg, EX_KEY))
 	{
-		//判断是按下还是松开
-		if (ctrlmsg.message == WM_KEYDOWN)
-			*(ctrlList + ctrlmsg.vkcode) = *(ctrlList + ctrlmsg.vkcode + 32) = 1;
-		if (ctrlmsg.message == WM_KEYUP)
-			*(ctrlList + ctrlmsg.vkcode) = *(ctrlList + ctrlmsg.vkcode + 32) = 0;
+		// 判断是按下还是松开
+		if (controlMsg.message == WM_KEYDOWN)
+			keyStateList[controlMsg.vkcode] = keyStateList[controlMsg.vkcode + 32] = 1;
+		if (controlMsg.message == WM_KEYUP)
+			keyStateList[controlMsg.vkcode] = keyStateList[controlMsg.vkcode + 32] = 0;
 	}
 	return;
 }
 
-//绘制
-void draw(int Airplane_x,int Airplane_y,Play *ListCoordinateEnemy,Play* ListCoordinateBullet)
+// 控制
+void control(int (&keyStateList)[123], Node& player) {
+	if (keyStateList['a'] || keyStateList['A'])
+		player.x -= player.speed;
+	if (keyStateList['d'] || keyStateList['D'])
+		player.x += player.speed;
+	if (keyStateList['w'] || keyStateList['W'])
+		player.y -= player.speed;
+	if (keyStateList['s'] || keyStateList['S'])
+		player.y += player.speed;
+
+	// 防止越墙
+	if (player.x > 360)
+		player.x = 360;
+	if (player.x < 0)
+		player.x = 0;
+	if (player.y > 575)
+		player.y = 575;
+	if (player.y < 0)
+		player.y = 0;
+}
+
+//打印背景透明图
+void putimage(int x, int y, int n){
+	putimage(x,y, &img[n+4], SRCAND); // 打印掩码
+	putimage(x,y, &img[n], SRCPAINT); // 打印
+}
+
+// 绘制
+void draw(Node& player, listArray& enemyList, listArray& bulletList)
 {
-	Node* p = NULL;//创建指针p用于读取链表
-	BeginBatchDraw();//开始缓冲
-	putimage(0, 0,&img[0]);//打印背景
-	//打印敌机
-	p = ListCoordinateEnemy->head;//将头节点赋予p
-	while (p != NULL)
-	{
-		putimage(p->x, p->y, &img[6],SRCAND);//打印敌机掩码
-		putimage(p->x, p->y, &img[2],SRCPAINT);//打印敌机
-		p = p->next;
+	int currentNode = enemyList.head; // 创建指针用于读取链表
+
+	BeginBatchDraw(); // 开始缓冲
+	putimage(0, 0, &img[0]); // 打印背景
+
+	// 打印敌机
+	while (currentNode != enemyList.end){
+		putimage(enemyList.arrayHead[currentNode]->x, enemyList.arrayHead[currentNode]->y, 2);
+		currentNode=listArray_getNextNotNull(enemyList, currentNode);
 	}
-	//打印飞机
-	putimage(Airplane_x, Airplane_y, &img[5], SRCAND);//打印飞机掩码
-	putimage(Airplane_x, Airplane_y, &img[1], SRCPAINT);//打印飞机
-	//打印子弹
-	p = ListCoordinateBullet->head;
-	while (p != NULL)
-	{
-		if (p->speed > 0)
-		{
-			putimage(p->x, p->y, &img[8], SRCAND);//打印敌机子弹掩码
-			putimage(p->x, p->y, &img[4], SRCPAINT);//打印敌机子弹
-		}
+
+	// 打印飞机
+	putimage(player.x, player.y, 1);
+
+	// 打印子弹
+	currentNode = bulletList.head;
+	while (!listArray_traverse(bulletList, currentNode)){
+		if (bulletList.arrayHead[currentNode]->speed > 0)
+			putimage(bulletList.arrayHead[currentNode]->x, bulletList.arrayHead[currentNode]->y, 4); // 打印敌机子弹
 		else
-		{
-			putimage(p->x, p->y, &img[7], SRCAND);//打印飞机子弹掩码
-			putimage(p->x, p->y, &img[3], SRCPAINT);//打印飞机子弹
-		}
-		p = p->next;
+			putimage(bulletList.arrayHead[currentNode]->x, bulletList.arrayHead[currentNode]->y, 3); // 打印飞机子弹
+		currentNode = listArray_getNextNotNull(bulletList, currentNode);
 	}
-	EndBatchDraw();//结束缓冲
+	EndBatchDraw(); // 结束缓冲
 	return;
 }
 
-//敌机坐标生成,攻击速度生成
-void CoordinateEnemy(Play* ListCoordinateEnemy,int enemynum,int enemyspeed)
-{
-	int n = 0;//创建n用于循环计数
-	Node* p = NULL;//创建p用于循环检索敌机数量
-	p = ListCoordinateEnemy->head;
-	//检索敌机数量
-	for (;p!=NULL;n++)
-	{
-		p = p->next;
+// 敌机坐标生成, 攻击速度生成
+void generateEnemyCoordinates(listArray& enemyList, int enemyCount, int enemySpeed){
+	Node p; // 定义一个临时节点
+	// 生成敌人坐标, 生成攻击速度
+	for (int i = 0; i < enemyCount; i++) {
+		p = { rand() % 375, rand() % 200 - 100, enemySpeed, rand() % 1000 + 1000 };
+		if (listArray_insert(enemyList, p))
+			break;
 	}
-	if (n <= enemynum)
-	{
-		//生成敌人坐标,生成攻击速度
-		for (; n < enemynum; n++)
-		{
-			LinkList_insert(ListCoordinateEnemy, rand() % 375, rand() % 200 - 100, enemyspeed, rand() % 1000 + 1000);
-		}
-	}
-	p = NULL;
 	return;
 }
 
-//敌机随机移动
-void MoveEnemy(Play* ListCoordinateEnemy)
+//越界删除
+void checkOutOfBounds(listArray& List) {
+	if (!listArray_empty(List))
+		if (List.arrayHead[List.head]==nullptr||List.arrayHead[List.head]->y > 800 || List.arrayHead[List.head]->y < -100)
+			listArray_del(List);
+}
+
+// 子弹生成
+void generateBulletCoordinates(listArray& enemyList, listArray& bulletList, int bulletSpeed)
 {
-	Node* p = NULL, * pn = NULL;//创建p指针用于遍历链表。pn用于删除p节点时失去指向的空间，即pn指向原p->next
-	p = ListCoordinateEnemy->head;//p指向头指针
-	while (p != NULL)
-	{
+	clock_t currentTime=NULL;
+	Node p; // 定义一个临时节点
+	int currentNode = enemyList.head;
+
+	// 生成子弹并随机赋予移动速度
+	while (!listArray_traverse(enemyList, currentNode)){
+		currentTime = clock();
+		if (enemyList.arrayHead[currentNode]->y > 10 && currentTime - enemyList.arrayHead[currentNode]->lastTime > enemyList.arrayHead[currentNode]->attackspeed) {
+			p = { enemyList.arrayHead[currentNode]->x + (enemyWIDTH - BulletWIDTH) / 2, enemyList.arrayHead[currentNode]->y + enemyHEIGHT + 2, bulletSpeed, 0 };
+			if (listArray_insert(bulletList, p))
+				break;
+			enemyList.arrayHead[currentNode]->lastTime = currentTime;
+		}
+		currentNode=listArray_getNextNotNull(enemyList, currentNode);
+	}
+	return;
+}
+
+// 敌机随机移动
+void moveEnemies(listArray& enemyList) {
+	int currentNode = enemyList.head; // currentNode指向头指针
+	Node *p = nullptr; // 临时指针
+
+	while (!listArray_traverse(enemyList, currentNode)) {
+		p=enemyList.arrayHead[currentNode];
 		p->x += rand() % 3 - 1;
 		p->y++;
-		//防越墙
+
+		// 防止越墙
 		if (p->x > 375)
 			p->x = 375;
 		if (p->x < 0)
 			p->x = 0;
-		pn = p->next;//保存p->next防止删除p节点后丢失目标
-		//敌机超出屏幕消失删除节点
-		if (p->y > 600)
-		{
-			LinkList_del(ListCoordinateEnemy, p);
-		}
-		p = pn;//更新指针
+		currentNode=listArray_getNextNotNull(enemyList, currentNode);
 	}
 	return;
 }
 
-//子弹生成
-void CoordinateBullet(Play* ListCoordinateEnemy,Play* ListCoordinateBullet,int speedbullet)
-{
-	Node* p = NULL;//创建指针p读取敌机链表
-	clock_t nowTime;
-	p = ListCoordinateEnemy->head;
-	//生成子弹并随机赋予移动速度
-	while (p != NULL) 
-	{
-		nowTime = clock();
-		if (p->y > 10 && nowTime - p->lastTime > p->attackspeed)
-		{
-			LinkList_insert(ListCoordinateBullet, p->x + (enemyWEIHGT - BulletWEIHGT) / 2, p->y + enemyHEIGHT + 2, speedbullet, 0);
-			p->lastTime = nowTime;
-			
-		}
-		p = p->next;
-	}
-	p = NULL;
-	return;
-}
+// 子弹移动
+void moveBullets(listArray& bulletList){
+	int currentNode = bulletList.head;
 
-//子弹移动
-void MoveBullet(Play* ListCoordinateBullet)
-{
-	Node* p = NULL,*pn;//创建p指针遍历子弹列表,pn用于删除p节点时失去指向的空间，即pn指向原p->next
-	p = ListCoordinateBullet->head;
-	while (p != NULL)
-	{
-		pn = p->next;//保存指向下一节点的指针
-		p->y += p->speed;
-		if (p->y > 600 || p->y < -20)
-			LinkList_del(ListCoordinateBullet, p);
-		p = pn;
+	while (!listArray_traverse(bulletList, currentNode)){
+		bulletList.arrayHead[currentNode]->y += bulletList.arrayHead[currentNode]->speed;
+		currentNode=listArray_getNextNotNull(bulletList, currentNode);
 	}
 	return;
 }
 
-//子弹敌机飞机碰撞判定
-void BengBeng(Play* ListCoordinateBullet, Play* ListCoordinateEnemy)
-{
-	Node* p = NULL, * pn = NULL, * q = NULL, * qn = NULL;//创建p,q指针遍历列表,pn\qn用于删除p\q节点时失去指向的空间，即pn指向原p->next
-	p = ListCoordinateBullet->head;//首先对子弹链表进行一级遍历
-	while (p != NULL)
-	{
-		pn = p->next;//保存指向节点的指针
-		q = ListCoordinateEnemy->head;//对敌人列表进行二级遍历
-		while (q != NULL)
-		{
-			qn = q->next;//保存指向节点的指针
-			if ((p->speed < 0) && (p->x < q->x + enemyWEIHGT - 5) && (q->x - BulletWEIHGT + 5 < p->x) && (p->y < q->y) && (q->y < p->y + enemyHEIGHT))
-			{
-				LinkList_del(ListCoordinateBullet, p);//删除子弹
-				LinkList_del(ListCoordinateEnemy, q);//删除敌机
-				break;
+
+
+// 子弹飞机碰撞判定,若我方飞机与子弹碰撞则返回true
+bool checkCollisions(Node& player, listArray& bulletList, listArray& enemyList){
+	int bulletNode = bulletList.head; // 首先对子弹链表进行一级遍历
+	int enemyNode = NULL; 
+	Node* Bullet= NULL;
+	Node* Enemy = NULL;
+
+	//没有到达链表尾部就一直遍历
+	while (!listArray_traverse(bulletList, bulletNode)){
+		enemyNode = enemyList.head; // 对敌人列表进行二级遍历
+		Bullet = bulletList.arrayHead[bulletNode];
+		//敌机与子弹判定
+		if (Bullet->speed < 0) {
+			//没有到达链表尾部就一直遍历
+			while (!listArray_traverse(enemyList, enemyNode)) {
+				Enemy = enemyList.arrayHead[enemyNode];
+				if ((Bullet->x < Enemy->x + enemyWIDTH - 5) && (Enemy->x - BulletWIDTH + 5 < Bullet->x) && (Bullet->y < Enemy->y) && (Enemy->y < Bullet->y + enemyHEIGHT)) {
+					listArray_del(bulletList, bulletNode); // 删除子弹
+					listArray_del(enemyList, enemyNode); // 删除敌机
+					break;
+				}
+				enemyNode = listArray_getNextNotNull(enemyList, enemyNode);
 			}
-			q = qn;
 		}
-		p = pn;
+		//我方飞机与子弹判定
+		else if ((Bullet->x < player.x+ myAirWIDTH) && (player.x - BulletWIDTH < Bullet->x) && (Bullet->y < player.y + myAirHEIGHT) && (player.y - BulletHEIGHT < Bullet->y)){
+			listArray_del(bulletList, bulletNode); // 删除子弹
+			return true;
+		}
+		
+		bulletNode = listArray_getNextNotNull(bulletList, bulletNode);
 	}
-	return;
+	return false;
 }
-
 int main()
 {
-	int game = 1;//开始初始化
-	clock_t nowTime;
-	init();//初始化资源
-	initgraph(BGWEIGHT,BGHEIGHT);
-	while (game)
+	int running = 1; // 游戏运行状态
+	clock_t currentTime;
+
+	init(); // 初始化资源
+	initgraph(BGWEIGHT, BGHEIGHT);
+
+	//资源声明和初始化
+	const int bulletMaxCount = 1000; // 子弹最大数量
+	const int enemyMaxCount = 5; // 敌机最大数量
+	Node *bulletlist[bulletMaxCount]= {nullptr};// 创建子弹数组
+	Node *enemylist[enemyMaxCount] = {nullptr}; // 创建敌机数组
+	listArray bulletArray = { bulletlist,bulletMaxCount }; // 创建子弹句柄，并初始化
+	listArray enemyArray = { enemylist,enemyMaxCount }; // 创建敌机句柄，并初始化
+	int  airplaneSpeed = 3, enemySpeed = 2; //飞机速度，敌机速度
+	int airplaneX = 200, airplaneY = 500; // 飞机坐标
+
+	while (running)
 	{
-		static int play = 0;
-		int Tick = 10, speed = 3, speedenemy = 2, Airplane[2], ctrlList[123], ctrlList_n = 0;
-		Node* p = NULL, * pn = NULL;//工具p用于遍历列表
-		Airplane[0] = 200;//重置飞机横坐标
-		Airplane[1] = 500;//重置飞机纵坐标
-		//重置控件
-		for (; ctrlList_n < 122; ctrlList_n++)
+		bool gamePlaying = false;
+		int tickInterval = 10, keyStateList[123]={0};
+		Node airplane = { airplaneX,airplaneY,airplaneSpeed,0,clock() }; // 定义飞机坐标
+		listArray_nothing(bulletArray); // 清空子弹数组
+		listArray_nothing(enemyArray); // 清空敌机数组
+
+		int currentNode = NULL; // 工具指针用于遍历列表
+		clock_t lastBulletTime= clock();
+
+		Node p; // 定义一个临时节点,用于队列添加初始化
+		// 游戏主体
+		while (!gamePlaying)
 		{
-			ctrlList[ctrlList_n] = 0;
-		}
+			draw(airplane, enemyArray, bulletArray); // 绘制游戏画面
 
-		 static Play ListCoordinateEnemy;//创建敌机链表
-		 static Play ListCoordinateBullet;//创建子弹链表
-		 LinkList_nothing(&ListCoordinateEnemy);//清空敌机链表
-		 LinkList_nothing(&ListCoordinateBullet);//清空子弹链表
-		 play = 1;// 启动游戏
-		//游戏主体
-		while (play)
-		{
-			static clock_t TimeStart = clock();
-			static clock_t TimeLast = clock();
-			static clock_t TimeBulletLast = clock();
-			draw(Airplane[0], Airplane[1], &ListCoordinateEnemy,&ListCoordinateBullet);
-			//获取控制
-			ctrl(ctrlList);
+			// 获取控制
+			keyInput(keyStateList);
 
-			CoordinateEnemy(&ListCoordinateEnemy, 5, speedenemy);//发送需要生成的敌机数量生成敌机
-			//生成敌机子弹
-			CoordinateBullet(&ListCoordinateEnemy, &ListCoordinateBullet, 4);
+			generateEnemyCoordinates(enemyArray, 5, enemySpeed); // 发送需要生成的敌机数量生成敌机
+			generateBulletCoordinates(enemyArray, bulletArray, 4); // 生成敌机子弹
 
-			//物体坐标更新
-			nowTime = clock();
-			if (nowTime - TimeLast > Tick)
-			{
-				TimeLast = nowTime;
-				MoveEnemy(&ListCoordinateEnemy);//敌机移动
-				if (ctrlList['a'] || ctrlList['A'])
-					Airplane[0]-=speed;
-				if (ctrlList['d'] || ctrlList['D'])
-					Airplane[0]+= speed;
-				if (ctrlList['w'] || ctrlList['W'])
-					Airplane[1]-= speed;
-				if (ctrlList['s'] || ctrlList['S'])
-					Airplane[1]+= speed;
-				nowTime = clock();
-				//生成飞机子弹
-				if (nowTime - TimeBulletLast > 300)//判断飞机生成子弹是否符合条件
-				{
-					TimeBulletLast = nowTime;
-					LinkList_insert(&ListCoordinateBullet, Airplane[0] + (myAirWEIHGT - BulletWEIHGT) / 2, Airplane[1] - BulletHEIGHT - 2, -5, 0);//生成我方子弹
-				}
-				
-				//子弹坐标更新
-				MoveBullet(&ListCoordinateBullet);
+			currentTime = clock();
+			// 物体坐标更新
+			if (currentTime - airplane.lastTime > tickInterval) {
+				airplane.lastTime = currentTime;
+				moveEnemies(enemyArray); // 敌机移动
+				control(keyStateList, airplane); // 我方飞机移动
 
-				//敌机与子弹碰撞判定
-				BengBeng(&ListCoordinateBullet, &ListCoordinateEnemy);
-				
-				//飞机与子弹判定
-				p = ListCoordinateBullet.head;//将子弹链表头节点赋予p
-				while (p != NULL)
-				{
-					pn = p->next;//保存节点
-					if ((p->speed > 0) && (p->x < Airplane[0] + myAirWEIHGT) && (Airplane[0] - BulletWEIHGT < p->x) && (p->y < Airplane[1] + myAirHEIGHT) && (Airplane[1] - BulletHEIGHT < p->y))
-					{
-						LinkList_del(&ListCoordinateBullet, p);//删除子弹
-						play = 0;
-					}
-					p = pn;
+				currentTime = clock();
+				// 判断飞机生成子弹是否符合条件
+				if (currentTime - lastBulletTime > 300) {
+					lastBulletTime = currentTime;
+					p = { airplane.x + (myAirWIDTH - BulletWIDTH) / 2, airplane.y - BulletHEIGHT - 2, -5 };
+					listArray_insert(bulletArray, p); // 生成我方子弹
 				}
 
+				moveBullets(bulletArray); // 子弹坐标更新
+				gamePlaying = checkCollisions(airplane,bulletArray, enemyArray); // 敌机与子弹碰撞判定，若我方飞机与子弹碰撞则返回true，游戏结束
+				checkOutOfBounds(enemyArray); // 敌机越界删除
+				checkOutOfBounds(bulletArray); // 子弹越界删除
 			}
-
-			//防越墙
-			if (Airplane[0] > 360)
-				Airplane[0] = 360;
-			if (Airplane[0] < 0)
-				Airplane[0] = 0;
-			if (Airplane[1] > 575)
-				Airplane[1] = 575;
-			if (Airplane[1] < 0)
-				Airplane[1] = 0;
 		}
-
 	}
 	closegraph();
 	return 0;
