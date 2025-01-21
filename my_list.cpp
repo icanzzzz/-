@@ -4,7 +4,7 @@
 #include "iostream"
 using namespace std;
 
-//´´½¨Á´±í½Úµãº¯Êı
+//åˆ›å»ºé“¾è¡¨èŠ‚ç‚¹å‡½æ•°
 Node* Node_init(int x, int y, int speed, int attackspeed){
     Node* temp = (Node*)malloc(sizeof(Node));
     if (temp == nullptr)
@@ -18,8 +18,8 @@ Node* Node_init(int x, int y, int speed, int attackspeed){
     return temp;
 }
 
-//Ê¹ÓÃÒıÓÃ´«²Î£¬Ïà±ÈÖ¸Õë´«²Î£¬±£Ö¤ÁËÖ¸ÕëÖ¸ÏòµÄµØÖ·Öµ²»»á±»ĞŞ¸Ä£¬Ìá¸ßÁË´úÂëµÄ°²È«ĞÔ¡£²¢ÇÒÒıÓÃ²»ÄÜÎª¿Õ£¬±ÜÃâÁË¿ÕÖ¸ÕëÒì³£¡£¼õÉÙ¼ì²â¿ÕÖ¸ÕëµÄ´úÂëÁ¿¡£
-//Ê¹ÓÃÒıÓÃµÄ Node_init º¯Êı
+//ä½¿ç”¨å¼•ç”¨ä¼ å‚ï¼Œç›¸æ¯”æŒ‡é’ˆä¼ å‚ï¼Œä¿è¯äº†æŒ‡é’ˆæŒ‡å‘çš„åœ°å€å€¼ä¸ä¼šè¢«ä¿®æ”¹ï¼Œæé«˜äº†ä»£ç çš„å®‰å…¨æ€§ã€‚å¹¶ä¸”å¼•ç”¨ä¸èƒ½ä¸ºç©ºï¼Œé¿å…äº†ç©ºæŒ‡é’ˆå¼‚å¸¸ã€‚å‡å°‘æ£€æµ‹ç©ºæŒ‡é’ˆçš„ä»£ç é‡ã€‚
+//ä½¿ç”¨å¼•ç”¨çš„ Node_init å‡½æ•°
 Node* Node_init(Node& p) {
     Node* temp = (Node*)malloc(sizeof(Node));
     if (temp == nullptr)
@@ -32,17 +32,17 @@ Node* Node_init(Node& p) {
     return temp;
 }
 
-/*»ñÈ¡Ñ­»·¶ÓÁĞÏÂÒ»¸öË÷Òı*/
+/*è·å–å¾ªç¯é˜Ÿåˆ—ä¸‹ä¸€ä¸ªç´¢å¼•*/
 int listArray_getNext(listArray& list,int p) {
     return (p + 1) % list.size;
 }
 
-/*»ñÈ¡Ñ­»·¶ÓÁĞÏÂÒ»¸ö·Ç¿ÕË÷Òı¡£µ±Ë÷ÒıÎª¶ÓÎ²Ê±£¬·µ»Ø¶ÓÎ²£¬²»ÔÙÏòºó»ñÈ¡*/
+/*è·å–å¾ªç¯é˜Ÿåˆ—ä¸‹ä¸€ä¸ªéç©ºç´¢å¼•ã€‚å½“ç´¢å¼•ä¸ºé˜Ÿå°¾æ—¶ï¼Œè¿”å›é˜Ÿå°¾ï¼Œä¸å†å‘åè·å–*/
 int listArray_getNextNotNull(listArray& list, int p) {
-    p = listArray_getNext(list, p);
-
     if (p == list.end)
         return p;
+    
+    p = listArray_getNext(list, p);
 
     if (list.arrayHead[p] == nullptr)
         return listArray_getNextNotNull(list, p);
@@ -50,30 +50,30 @@ int listArray_getNextNotNull(listArray& list, int p) {
         return p;
 }
 
-/*ÓëÎ²Î»ÖÃ¶Ô±È¡£ÏàµÈÔò·µ»Ø true£¬·ñÔò·µ»Ø false*/
+/*ä¸å°¾ä½ç½®å¯¹æ¯”ã€‚ç›¸ç­‰åˆ™è¿”å› trueï¼Œå¦åˆ™è¿”å› false*/
 bool listArray_traverse(listArray& list, int p) {
     return p==list.end;
 }
 
-/*ÓëÍ·Î»ÖÃ¶Ô±È¡£ÏàµÈÔò·µ»Ø true£¬·ñÔò·µ»Ø false*/
+/*ä¸å¤´ä½ç½®å¯¹æ¯”ã€‚ç›¸ç­‰åˆ™è¿”å› trueï¼Œå¦åˆ™è¿”å› false*/
 bool listArray_reverse_traverse(listArray& list, int p) {
     return p==list.head;
 }
 
-/*ÅĞ¶Ï¶ÓÁĞÊÇ·ñÎªÂú¡£·µ»ØÎª true ±íÊ¾¶ÓÁĞÎªÂú£¬·ñÔòÎª fals*/
+/*åˆ¤æ–­é˜Ÿåˆ—æ˜¯å¦ä¸ºæ»¡ã€‚è¿”å›ä¸º true è¡¨ç¤ºé˜Ÿåˆ—ä¸ºæ»¡ï¼Œå¦åˆ™ä¸º fals*/
 bool listArray_full(listArray& list) {
     return listArray_reverse_traverse(list, (list.end + 1) % list.size);
 }
 
-/*ÅĞ¶Ï¶ÓÁĞÊÇ·ñÎª¿Õ¡£·µ»ØÎª true ±íÊ¾¶ÓÁĞÎª¿Õ£¬·ñÔòÎª fals*/
+/*åˆ¤æ–­é˜Ÿåˆ—æ˜¯å¦ä¸ºç©ºã€‚è¿”å›ä¸º true è¡¨ç¤ºé˜Ÿåˆ—ä¸ºç©ºï¼Œå¦åˆ™ä¸º fals*/
 bool listArray_empty(listArray& list) {
     return listArray_traverse(list, list.head);
 }
 
-/*Ë³ĞòÁ´±í½Úµã²åÈëº¯Êı¡¢Î²²å·¨¡£·µ»ØÎª true ±íÊ¾¶ÓÁĞÎªÂú£¬·ñÔòÎª false*/
+/*é¡ºåºé“¾è¡¨èŠ‚ç‚¹æ’å…¥å‡½æ•°ã€å°¾æ’æ³•ã€‚è¿”å›ä¸º true è¡¨ç¤ºé˜Ÿåˆ—ä¸ºæ»¡ï¼Œå¦åˆ™ä¸º false*/
 bool listArray_insert(listArray& list, Node& p) {
     if (listArray_full(list)) {
-        cout << "Êı×éÒÑÂú£¡" << endl;
+        cout << "æ•°ç»„å·²æ»¡ï¼" << endl;
         return true;
     }
     try {
@@ -81,53 +81,53 @@ bool listArray_insert(listArray& list, Node& p) {
         list.end=(list.end+1)%list.size;
     }
     catch (const bad_alloc& e) {
-        cout << "ÄÚ´æ·ÖÅäÊ§°Ü£¡" << endl;
+        cout << "å†…å­˜åˆ†é…å¤±è´¥ï¼" << endl;
     }
     return false;
 }
 
-/*É¾³ıÎ²½Úµã¡£·µ»ØÎª true ±íÊ¾¶ÓÁĞÎª¿Õ£¬·ñÔòÎª false*/
+/*åˆ é™¤å°¾èŠ‚ç‚¹ã€‚è¿”å›ä¸º true è¡¨ç¤ºé˜Ÿåˆ—ä¸ºç©ºï¼Œå¦åˆ™ä¸º false*/
 bool listArray_del(listArray& list) {
-    //Ñ­»·¶ÓÁĞ¼ì²â¶Ó¿Õ
+    //å¾ªç¯é˜Ÿåˆ—æ£€æµ‹é˜Ÿç©º
     if (listArray_empty(list)) {
-        cout << "¶ÓÁĞÎª¿Õ£¡" << endl;
+        cout << "é˜Ÿåˆ—ä¸ºç©ºï¼" << endl;
         return true;
     }
 
-    //ÊÍ·ÅÄÚ´æ
+    //é‡Šæ”¾å†…å­˜
     free(list.arrayHead[list.head]);
     list.arrayHead[list.head] = nullptr;
     list.head = listArray_getNextNotNull(list, list.head);
     return false;
 }
 
-/*É¾³ıÖ¸¶¨Ë÷ÒıµÄ½Úµã·µ»ØÎª true ±íÊ¾¶ÓÁĞÎª¿Õ£¬·ñÔòÎª false*/
+/*åˆ é™¤æŒ‡å®šç´¢å¼•çš„èŠ‚ç‚¹è¿”å›ä¸º true è¡¨ç¤ºé˜Ÿåˆ—ä¸ºç©ºï¼Œå¦åˆ™ä¸º false*/
 bool listArray_del(listArray& list, int index) {
-    //Ñ­»·¶ÓÁĞ¼ì²â¶Ó¿Õ
+    //å¾ªç¯é˜Ÿåˆ—æ£€æµ‹é˜Ÿç©º
     if (listArray_empty(list)) {
-        cout << "¶ÓÁĞÎª¿Õ£¡" << endl;
+        cout << "é˜Ÿåˆ—ä¸ºç©ºï¼" << endl;
         return true;
     }
     if (index < 0 || index >= list.size) {
-        cout << "Ë÷ÒıÎŞĞ§£¡" << endl;
+        cout << "ç´¢å¼•æ— æ•ˆï¼" << endl;
         return false;
     }
     if (index == list.head) {
         list.head = listArray_getNextNotNull(list, list.head);
     }
 
-    //ÊÍ·ÅÄÚ´æ
+    //é‡Šæ”¾å†…å­˜
     free(list.arrayHead[index]);
     list.arrayHead[index] = nullptr;
     return false;
-    // Èç¹ûÉ¾³ıµÄÊÇÖĞ¼ä½Úµã£¬ĞèÒª¸üĞÂÖ¸Õë
-    // ÕâÀï¼ÙÉè listArray ÊÇÒ»¸öÑ­»·¶ÓÁĞ£¬É¾³ıÖĞ¼ä½Úµã²»»áÓ°ÏìÆäËû½ÚµãµÄÂß¼­
-    // Èç¹ûĞèÒª¸ü¸´ÔÓµÄÂß¼­£¬¿ÉÄÜĞèÒªÖØĞÂÅÅÁĞÊı×éÖĞµÄÔªËØ
+    // å¦‚æœåˆ é™¤çš„æ˜¯ä¸­é—´èŠ‚ç‚¹ï¼Œéœ€è¦æ›´æ–°æŒ‡é’ˆ
+    // è¿™é‡Œå‡è®¾ listArray æ˜¯ä¸€ä¸ªå¾ªç¯é˜Ÿåˆ—ï¼Œåˆ é™¤ä¸­é—´èŠ‚ç‚¹ä¸ä¼šå½±å“å…¶ä»–èŠ‚ç‚¹çš„é€»è¾‘
+    // å¦‚æœéœ€è¦æ›´å¤æ‚çš„é€»è¾‘ï¼Œå¯èƒ½éœ€è¦é‡æ–°æ’åˆ—æ•°ç»„ä¸­çš„å…ƒç´ 
 }
 
-/*Çå¿ÕÁ´±í¡£·µ»ØÎª true ±íÊ¾¶ÓÁĞÎª¿Õ*/
+/*æ¸…ç©ºé“¾è¡¨ã€‚è¿”å›ä¸º true è¡¨ç¤ºé˜Ÿåˆ—ä¸ºç©º*/
 bool listArray_nothing(listArray& list) {
-    //ÊÍ·ÅÄÚ´æ
+    //é‡Šæ”¾å†…å­˜
     while (!listArray_empty(list))
         listArray_del(list);
     return true;
